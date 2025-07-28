@@ -1,0 +1,1 @@
+(venv) sidd-myself@sidd-myself:~/Desktop/POC$ pip install flask faiss-cpu numpy pymongo python-dotenv

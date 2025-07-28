@@ -1,0 +1,32 @@
+{
+  "name": "inteli-resolve",
+  "version": "1.0.0",
+  "description": "This is the backend of the POC for Inteli-Resolve, an AI powered support platform for businesses and enterprise.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "POC",
+    "Backend",
+    "MongoDB",
+    "VectorDB",
+    "Vecter",
+    "Embeddings",
+    "Express",
+    "NodeJS"
+  ],
+  "author": "Siddhartha Mukherjee (Analyst, KPMG India)",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "mongoose": "^8.16.4",
+    "nodemon": "^3.1.10",
+    "oracledb": "^6.9.0"
+  }
+}
