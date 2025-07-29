@@ -1,16 +1,29 @@
 from flask import Flask, request, jsonify
+from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env
-load_dotenv()
-
+# Initialize Flask app
 app = Flask(__name__)
 
-# Connect to MongoDB
+# Load environment variables
+load_dotenv()
+
+# ---------- Sentence Embedding Model ----------
+model = SentenceTransformer('all-MiniLM-L6-v2')  # Loads locally
+
+@app.route('/embed', methods=['POST'])
+def embed():
+    data = request.get_json()
+    texts = data.get('sentences', [])
+    embeddings = model.encode(texts).tolist()
+    return jsonify({'vectors': embeddings})
+
+# ---------- MongoDB + FAISS Search ----------
+# MongoDB setup
 mongo_uri = os.getenv('MONGO_URI')
 client = MongoClient(mongo_uri)
 db = client["inteli-resolve"]
@@ -32,22 +45,17 @@ if len(embeddings) > 0:
 @app.route('/similar', methods=['POST'])
 def find_similar():
     data = request.json
-
-    # Parse embedding input
     embedding = np.array(data['embedding']).astype('float32').reshape(1, -1)
     k = int(data.get('top_k', 5))
-    threshold = float(data.get('threshold', 0.3))  # Lower = more similar (L2)
+    threshold = float(data.get('threshold', 0.3))
 
-    # Perform FAISS search
     D, I = index.search(embedding, k)
-    print("Distances:", D[0])
 
-    # Gather matching IDs within threshold
     similar_ids = []
     for dist, idx in zip(D[0], I[0]):
         if idx == -1:
-            continue  # Skip invalid
-        if dist <= threshold:  # L2: smaller = more similar
+            continue
+        if dist <= threshold:
             similar_ids.append(doc_ids[idx])
 
     return jsonify({"similar_ids": similar_ids})
@@ -59,10 +67,10 @@ def add_to_index():
     doc_id = data['id']
 
     index.add(embedding)
-    doc_ids.append(doc_id)  # Keep it in sync
+    doc_ids.append(doc_id)
 
     return jsonify({"message": "Added to FAISS", "index_size": index.ntotal})
 
-
+# ---------- Run ----------
 if __name__ == '__main__':
-    app.run(port=5002)
+    app.run(host='0.0.0.0', port=5000)  # Single port for all endpoints

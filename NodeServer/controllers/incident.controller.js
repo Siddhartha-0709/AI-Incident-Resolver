@@ -3,7 +3,7 @@ import incidentModel from "../models/incident.model.js";
 
 
 const getEmbedding = async (text) => {
-    const res = await axios.post('http://localhost:5001/embed', {
+    const res = await axios.post('http://python-services:5000/embed', {
         sentences: [text],
     });
     const vector = res.data.vectors[0]; // 384-d vector
@@ -52,7 +52,7 @@ const newIncident = async (req, res) => {
         await newIncidentObject.save();
 
         console.log("Refreshing FAISS index with new incident embedding");
-        await axios.post("http://localhost:5002/add", {
+        await axios.post("http://python-services:5000/add", {
             id: newIncidentObject._id.toString(),
             embedding: embedding,
         });
@@ -75,7 +75,7 @@ const findSimilarIncidents = async (embedding) => {
     }
 
     try {
-        const faissResponse = await axios.post('http://localhost:5002/similar', {
+        const faissResponse = await axios.post('http://python-services:5000/similar', {
             embedding,
             top_k: 5,
             threshold: 0.3,
