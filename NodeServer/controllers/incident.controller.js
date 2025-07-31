@@ -100,7 +100,7 @@ const findSimilarIncidents = async (embedding) => {
     }
 };
 
-const getIncident = async (req, res) => {
+const getIncidentByIssuedBy = async (req, res) => {
     const { issuedBy } = req.query;
     console.log("Fetching incidents for issuedBy:", issuedBy);
     if (!issuedBy) {
@@ -180,4 +180,37 @@ const getUnresolvedIncidents = async (req, res) => {
     }
 };
 
-export { newIncident, getIncident, explicitNewIncident, incidentResolve, getUnresolvedIncidents};
+
+const getIncidentById = async (req, res) => {
+    const { id } = req.query;
+    console.log("Fetching incidents for id:", id);
+    if (!id) {
+        return res.status(400).send("ID is required");
+    }
+    try {
+        const incidents = await incidentModel.find({ id });
+        if (incidents.length === 0) {
+            return res.status(404).json("No incidents found for the given id - - -> " + id);
+        }
+        res.status(200).json(incidents);
+    } catch (error) {
+        console.error("Error fetching incidents:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}
+
+const getAllIncidents = async (req, res) => {
+    try {
+        const incidents = await incidentModel.find();
+        if (incidents.length === 0) {
+            return res.status(404).json("No incidents found");
+        }
+        res.status(200).json(incidents);
+    } catch (error) {
+        console.error("Error fetching incidents:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}
+
+
+export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents};
