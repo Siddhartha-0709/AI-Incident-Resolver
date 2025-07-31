@@ -188,7 +188,7 @@ const getIncidentById = async (req, res) => {
         return res.status(400).send("ID is required");
     }
     try {
-        const incidents = await incidentModel.find({ id });
+        const incidents = await incidentModel.findById(id);
         if (incidents.length === 0) {
             return res.status(404).json("No incidents found for the given id - - -> " + id);
         }
