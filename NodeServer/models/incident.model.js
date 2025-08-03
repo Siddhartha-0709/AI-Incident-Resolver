@@ -34,6 +34,10 @@ const incidentSchema = new mongoose.Schema({
         type: [],
         default: [],
     },
+    fixScript: {
+        type: String,
+        default: '',
+    },
 },{timestamps: true});
 
 export default mongoose.model('Incident', incidentSchema);

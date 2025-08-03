@@ -11,4 +11,6 @@ router.route('/incident-open').get(getUnresolvedIncidents);
 router.route('/incident-by-id').get(getIncidentById);
 router.route('/get-all').get(getAllIncidents);
 
+
+
 export default router;
