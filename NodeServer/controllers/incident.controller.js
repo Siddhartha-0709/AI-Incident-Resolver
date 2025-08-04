@@ -68,6 +68,50 @@ const newIncident = async (req, res) => {
         return res.status(500).send("Internal Server Error");
     }
 };
+const explicitNewIncident = async (req, res) => {
+    console.log("Explicitly creating new incident");
+    const { title, description, symptoms = [], issuedBy } = req.body;
+    if (!title || !description || !issuedBy) {
+        return res.status(400).send("Title, description, and issuedBy are required");
+    }
+    try {
+
+        const embedding = await getEmbedding(textToEmbed);
+        console.log("Embedding received");
+
+        if (!Array.isArray(embedding) || embedding.length !== 384) {
+            return res.status(400).send("Invalid embedding received");
+        }
+
+        const newIncidentObject = new incidentModel({
+            title,
+            description,
+            symptoms,
+            embedding,
+            issuedBy
+        });
+
+
+        await newIncidentObject.save();
+
+        console.log("Refreshing FAISS index with new incident embedding");
+        await axios.post("http://python-services:5000/add", {
+            id: newIncidentObject._id.toString(),
+            embedding: embedding,
+        });
+
+        console.log("New incident saved:", newIncidentObject._id);
+        return res.status(201).json({
+            message: "New incident created successfully",
+            incidentId: newIncidentObject._id
+        });
+
+    } catch (error) {
+        console.error("Error creating new incident:", error);
+        return res.status(500).send("Internal Server Error");
+    }
+};
+
 
 const findSimilarIncidents = async (embedding) => {
     if (!embedding || !Array.isArray(embedding)) {
@@ -118,33 +162,7 @@ const getIncidentByIssuedBy = async (req, res) => {
     }
 }
 
-const explicitNewIncident = async (req, res) => {
-    console.log("Explicitly creating new incident");
-    const { title, description, symptoms = [], issuedBy } = req.body;
-    if (!title || !description || !issuedBy) {
-        return res.status(400).send("Title, description, and issuedBy are required");
-    }
-    try {
-        const newIncidentObject = new incidentModel({
-            title,
-            description,
-            symptoms,
-            issuedBy
-        });
 
-        await newIncidentObject.save();
-
-        console.log("New incident saved:", newIncidentObject._id);
-        return res.status(201).json({
-            message: "New incident created successfully",
-            incidentId: newIncidentObject._id
-        });
-
-    } catch (error) {
-        console.error("Error creating new incident:", error);
-        return res.status(500).send("Internal Server Error");
-    }
-};
 
 const incidentResolve = async (req, res) => {
     const { incidentId, resolution, resolvedBy } = req.body;
@@ -213,4 +231,4 @@ const getAllIncidents = async (req, res) => {
 }
 
 
-export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents};
+export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents };

@@ -1,9 +1,28 @@
-import e from "express";
 import userModel from "../models/user.model.js";
+import axios from "axios";
+
+const getEmbedding = async (text) => {
+    const res = await axios.post('http://python-services:5000/embed', {
+        sentences: [text],
+    });
+    const vector = res.data.vectors[0]; // 384-d vector
+    return vector;
+};
+
 
 const createUser = async (req, res) => {
     try {
         const { email, password, name, role, skills } = req.body;
+
+        const textToEmbed = skills;
+        // Code to Embed Skills of User
+        const embedding = await getEmbedding(textToEmbed);
+        console.log("Embedding received");
+
+        if (!Array.isArray(embedding) || embedding.length !== 384) {
+            return res.status(400).send("Invalid embedding received");
+        }
+
         const newUser = new userModel({ email, password, name, role, skills });
         await newUser.save();
         res.status(201).json({ message: "User created successfully", user: newUser });
