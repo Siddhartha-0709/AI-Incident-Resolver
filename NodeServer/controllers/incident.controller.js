@@ -1,5 +1,65 @@
 import axios from "axios";
 import incidentModel from "../models/incident.model.js";
+import { GoogleGenAI } from '@google/genai';
+
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+async function generateAIHelpingTipsandSkills(incidentDetails) {
+    try {
+        const prompt = `
+Given the incident details below, generate a helping tip and list of skills needed to resolve it.
+
+Return a valid JSON (no markdown, no backticks, no comments):
+{
+  "helping_tips": ["..."],
+  "skills_needed": ["..."]
+}
+
+Incident:
+${incidentDetails}
+`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-lite",
+            contents: prompt
+        });
+
+        let reportText = response.text.trim();
+
+        reportText = reportText
+            .replace(/^```json\s*/, '')
+            .replace(/```$/, '')
+            .replace(/```/g, '');
+
+        let reportObj;
+        try {
+            reportObj = JSON.parse(reportText);
+        } catch (jsonErr) {
+            console.error("Invalid JSON from Gemini:", reportText);
+            throw new Error("Gemini returned invalid JSON format.");
+        }
+
+        const requiredKeys = ["helping_tips", "skills_needed"];
+        for (const key of requiredKeys) {
+            if (!(key in reportObj)) reportObj[key] = [];
+        }
+
+        if (!Array.isArray(reportObj.helping_tips) || !Array.isArray(reportObj.skills_needed)) {
+            throw new Error("Invalid format: Expected arrays");
+        }
+
+        console.log("✅ AI Report Generated:", reportObj);
+        return reportObj;
+
+    } catch (err) {
+        console.error("❌ Error in generateAIHelpingTips:", err.message);
+        return null;
+    }
+}
 
 
 const getEmbedding = async (text) => {
@@ -40,14 +100,49 @@ const newIncident = async (req, res) => {
         }
 
         console.log("No similar incidents found, proceeding to save new incident");
+        console.log("Generating AI helping tips and skills needed from Gemini");
+        // Create new incident object generate aiHelpingTips from Gemini and skillsNeeded from Gemini
+        const aiReport = await generateAIHelpingTipsandSkills(textToEmbed);
+        if (!aiReport) {
+            return res.status(500).send("Error generating AI report");
+        }
 
+        // Embedded the skillsNeeded
+        if (!Array.isArray(aiReport.skills_needed)) {
+            return res.status(400).send("Invalid skills_needed format from AI report");
+        }
+        console.log("Generating skill embeddings for skills needed");
+        const skillEmbeddings = await getEmbedding(aiReport.skills_needed);
+        if (!Array.isArray(skillEmbeddings) || skillEmbeddings.length !== 384) {
+            return res.status(400).send("Invalid skill embeddings received");
+        }
+
+        console.log("Skill embeddings generated successfully");
+        console.log("Requesting user recommendation based on skill embeddings");
+
+        const userRes = await axios.post("http://python-services:5000/recommend-user", {
+            skillEmbedding: skillEmbeddings,
+        });
+
+        const assignedTo = userRes.data.user_id || null;
+        console.log("User recommended for assignment:", assignedTo);
+
+        console.log("Creating new incident object with AI report data");
         const newIncidentObject = new incidentModel({
             title,
             description,
             symptoms,
             issuedBy,
-            embedding // Save as is, no need to wrap manually
+            embedding,
+            aiHelpingTips: aiReport.helping_tips,
+            skillsNeeded: aiReport.skills_needed,
+            skillEmbeddings: skillEmbeddings,
+            status: 'open', 
+            assignedTo: assignedTo
         });
+
+        console.log("New incident object created:", newIncidentObject);
+
 
         await newIncidentObject.save();
 
@@ -64,10 +159,11 @@ const newIncident = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error creating new incident:", error);
+        console.error("Error creating new incident:", error.message);
         return res.status(500).send("Internal Server Error");
     }
 };
+
 const explicitNewIncident = async (req, res) => {
     console.log("Explicitly creating new incident");
     const { title, description, symptoms = [], issuedBy } = req.body;
@@ -91,7 +187,6 @@ const explicitNewIncident = async (req, res) => {
             issuedBy
         });
 
-
         await newIncidentObject.save();
 
         console.log("Refreshing FAISS index with new incident embedding");
@@ -111,7 +206,6 @@ const explicitNewIncident = async (req, res) => {
         return res.status(500).send("Internal Server Error");
     }
 };
-
 
 const findSimilarIncidents = async (embedding) => {
     if (!embedding || !Array.isArray(embedding)) {
@@ -162,8 +256,6 @@ const getIncidentByIssuedBy = async (req, res) => {
     }
 }
 
-
-
 const incidentResolve = async (req, res) => {
     const { incidentId, resolution, resolvedBy } = req.body;
     if (!incidentId || !resolution || !resolvedBy) {
@@ -198,7 +290,6 @@ const getUnresolvedIncidents = async (req, res) => {
     }
 };
 
-
 const getIncidentById = async (req, res) => {
     const { id } = req.query;
     console.log("Fetching incidents for id:", id);
@@ -229,6 +320,5 @@ const getAllIncidents = async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 }
-
 
 export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents };

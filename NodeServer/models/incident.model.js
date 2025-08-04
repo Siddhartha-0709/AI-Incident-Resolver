@@ -15,7 +15,7 @@ const incidentSchema = new mongoose.Schema({
     },
     symptoms: {
         type: [String],
-        default: [],  
+        default: [],
     },
     status: {
         type: String,
@@ -30,7 +30,7 @@ const incidentSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
-    embedding:{
+    embedding: {
         type: [],
         default: [],
     },
@@ -42,10 +42,20 @@ const incidentSchema = new mongoose.Schema({
         type: [String],
         default: [],
     },
+    skillEmbeddings: {
+        type: [],
+        default: [],
+    },
     aiHelpingTips: {
         type: String,
         default: '',
     },
-},{timestamps: true});
+    assignedTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Reference to the User model
+        default: null
+    }
+
+}, { timestamps: true });
 
 export default mongoose.model('Incident', incidentSchema);

@@ -27,6 +27,7 @@
     "express": "^5.1.0",
     "mongoose": "^8.16.4",
     "nodemon": "^3.1.10",
-    "oracledb": "^6.9.0"
+    "oracledb": "^6.9.0",
+    "@google/genai": "^1.11.0"
   }
 }

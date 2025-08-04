@@ -71,6 +71,37 @@ def add_to_index():
 
     return jsonify({"message": "Added to FAISS", "index_size": index.ntotal})
 
+@app.route('/recommend-user', methods=['POST'])
+def recommend_user():
+    from pymongo import MongoClient
+
+    # Load user skill embeddings from MongoDB
+    user_collection = client["inteli-resolve"]["users"]
+    docs = list(user_collection.find({"skillEmbeddings": {"$exists": True, "$ne": []}}, {"_id": 1, "skillEmbeddings": 1}))
+    if not docs:
+        return jsonify({"user_id": None})
+
+    embeddings = [doc['skillEmbeddings'] for doc in docs]
+    ids = [str(doc['_id']) for doc in docs]
+
+    user_index = faiss.IndexFlatL2(384)
+    user_index.add(np.array(embeddings).astype('float32'))
+
+    # Embed incident's skills vector
+    data = request.get_json()
+    incident_embedding = np.array(data['skillEmbedding']).astype('float32').reshape(1, -1)
+
+    # Find most similar user
+    D, I = user_index.search(incident_em    bedding, 1)
+
+    best_match_idx = I[0][0]
+    best_user_id = ids[best_match_idx] if best_match_idx != -1 else None
+
+    return jsonify({"user_id": best_user_id})
+
+
+
+
 # ---------- Run ----------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)  # Single port for all endpoints
