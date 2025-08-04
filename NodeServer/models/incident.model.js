@@ -47,8 +47,8 @@ const incidentSchema = new mongoose.Schema({
         default: [],
     },
     aiHelpingTips: {
-        type: String,
-        default: '',
+        type: [String], 
+        default: [],
     },
     assignedTo: {
         type: mongoose.Schema.Types.ObjectId,
