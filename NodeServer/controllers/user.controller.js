@@ -14,7 +14,7 @@ const createUser = async (req, res) => {
     try {
         const { email, password, name, role, skills } = req.body;
         console.log("Embedding skills for user:", skills);
-    console.log("Sending to embedding service...");
+        console.log("Sending to embedding service...");
         const textToEmbed = skills.join(' '); // Join skills into a single string for embedding
         // Code to Embed Skills of User
         const embedding = await getEmbedding(textToEmbed);
@@ -24,7 +24,7 @@ const createUser = async (req, res) => {
             return res.status(400).send("Invalid embedding received");
         }
 
-        const newUser = new userModel({ email, password, name, role, skills, embedding });
+        const newUser = new userModel({ email, password, name, role, skills, skillEmbeddings: embedding });
         await newUser.save();
         res.status(201).json({ message: "User created successfully", user: newUser });
     } catch (error) {
