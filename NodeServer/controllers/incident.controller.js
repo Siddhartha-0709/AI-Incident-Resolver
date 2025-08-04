@@ -4,8 +4,6 @@ import { GoogleGenAI } from '@google/genai';
 
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 
 async function generateAIHelpingTipsandSkills(incidentDetails) {
