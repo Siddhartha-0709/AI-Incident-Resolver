@@ -23,7 +23,7 @@ const createUser = async (req, res) => {
             return res.status(400).send("Invalid embedding received");
         }
 
-        const newUser = new userModel({ email, password, name, role, skills });
+        const newUser = new userModel({ email, password, name, role, skills, embedding });
         await newUser.save();
         res.status(201).json({ message: "User created successfully", user: newUser });
     } catch (error) {
