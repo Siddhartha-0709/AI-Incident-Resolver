@@ -14,7 +14,7 @@ const createUser = async (req, res) => {
     try {
         const { email, password, name, role, skills } = req.body;
 
-        const textToEmbed = skills;
+        const textToEmbed = skills.join(' '); // Join skills into a single string for embedding
         // Code to Embed Skills of User
         const embedding = await getEmbedding(textToEmbed);
         console.log("Embedding received");

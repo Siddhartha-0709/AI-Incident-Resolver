@@ -38,6 +38,14 @@ const incidentSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    skillsNeeded: {
+        type: [String],
+        default: [],
+    },
+    aiHelpingTips: {
+        type: String,
+        default: '',
+    },
 },{timestamps: true});
 
 export default mongoose.model('Incident', incidentSchema);
