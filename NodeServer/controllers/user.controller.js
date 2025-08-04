@@ -3,8 +3,8 @@ import userModel from "../models/user.model.js";
 
 const createUser = async (req, res) => {
     try {
-        const { email, password, name, role } = req.body;
-        const newUser = new userModel({ email, password, name, role });
+        const { email, password, name, role, skills } = req.body;
+        const newUser = new userModel({ email, password, name, role, skills });
         await newUser.save();
         res.status(201).json({ message: "User created successfully", user: newUser });
     } catch (error) {

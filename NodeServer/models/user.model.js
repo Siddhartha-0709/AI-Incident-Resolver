@@ -19,6 +19,14 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'resolver', 'admin'],
         default: 'user',
     },
+    skills: {
+        type: [String],
+        default: [],
+    },
+    skillEmbeddings:{
+        type: [],
+        default: [],
+    },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);
