@@ -14,7 +14,7 @@ Given the incident details below, generate a helping tip and list of skills need
 
 Return a valid JSON (no markdown, no backticks, no comments):
 {
-  "helping_tips": ["..."],
+  "helping_tips": "...",
   "skills_needed": ["..."]
 }
 
