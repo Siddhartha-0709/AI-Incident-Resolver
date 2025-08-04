@@ -4,8 +4,8 @@ import { createUser, getUserByEmail, loginUser, deleteUser } from "../controller
 const router = Router();
 
 router.route('/create-user').post(createUser);
-router.route('/get-user').get(getUserByEmail);
 router.route('/login-user').post(loginUser);
+router.route('/get-user').get(getUserByEmail);
 router.route('/delete-user').delete(deleteUser);
 
 export default router;
