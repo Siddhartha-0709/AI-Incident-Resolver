@@ -13,11 +13,12 @@ const getEmbedding = async (text) => {
 const createUser = async (req, res) => {
     try {
         const { email, password, name, role, skills } = req.body;
-
+        console.log("Embedding skills for user:", skills);
+    console.log("Sending to embedding service...");
         const textToEmbed = skills.join(' '); // Join skills into a single string for embedding
         // Code to Embed Skills of User
         const embedding = await getEmbedding(textToEmbed);
-        console.log("Embedding received");
+        console.log("Embedding received for User skills:", embedding);
 
         if (!Array.isArray(embedding) || embedding.length !== 384) {
             return res.status(400).send("Invalid embedding received");
