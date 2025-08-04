@@ -92,7 +92,7 @@ def recommend_user():
     incident_embedding = np.array(data['skillEmbedding']).astype('float32').reshape(1, -1)
 
     # Find most similar user
-    D, I = user_index.search(incident_em    bedding, 1)
+    D, I = user_index.search(incident_embedding, 1)
 
     best_match_idx = I[0][0]
     best_user_id = ids[best_match_idx] if best_match_idx != -1 else None
