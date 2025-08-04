@@ -10,16 +10,20 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function generateAIHelpingTipsandSkills(incidentDetails) {
     try {
         const prompt = `
-Given the incident details below, generate a helping tip and list of skills needed to resolve it.
+You are an AI assistant. Given the incident details below, do two things:
+1. Generate 3-5 **concise helping tips**.
+2. Generate 3-5 **skills** needed to resolve the incident.
 
-Return a valid JSON (no markdown, no backticks, no comments):
-{
-  "helping_tips": "...",
-  "skills_needed": ["..."]
-}
+Return this as **valid JSON** ONLY (no markdown, no backticks, no commentary). Both fields must be arrays of strings.
 
 Incident:
-${incidentDetails}
+"${incidentDetails}"
+
+Your response:
+{
+  "helping_tips": ["tip1", "tip2", "..."],
+  "skills_needed": ["skill1", "skill2", "..."]
+}
 `;
 
         const response = await ai.models.generateContent({
@@ -111,7 +115,7 @@ const newIncident = async (req, res) => {
             return res.status(400).send("Invalid skills_needed format from AI report");
         }
         console.log("Generating skill embeddings for skills needed");
-        const skillEmbeddings = await getEmbedding(aiReport.skills_needed);
+        const skillEmbeddings = await getEmbedding(aiReport.skills_needed.join(' '));
         if (!Array.isArray(skillEmbeddings) || skillEmbeddings.length !== 384) {
             return res.status(400).send("Invalid skill embeddings received");
         }
