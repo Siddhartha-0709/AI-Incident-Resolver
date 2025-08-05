@@ -10,8 +10,8 @@ const incidentSchema = new mongoose.Schema({
         required: true,
     },
     issuedBy: {
-        type: String,
-        required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     },
     symptoms: {
         type: [String],
@@ -47,7 +47,7 @@ const incidentSchema = new mongoose.Schema({
         default: [],
     },
     aiHelpingTips: {
-        type: [String], 
+        type: [String],
         default: [],
     },
     assignedTo: {
