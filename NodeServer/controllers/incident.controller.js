@@ -248,7 +248,7 @@ const getIncidentByIssuedBy = async (req, res) => {
         return res.status(400).send("issuedBy is required");
     }
     try {
-        const incidents = await incidentModel.find({ issuedBy });
+        const incidents = await incidentModel.findById({ issuedBy });
         if (incidents.length === 0) {
             return res.status(404).json("No incidents found for the given issuedBy - - -> " + issuedBy);
         }
