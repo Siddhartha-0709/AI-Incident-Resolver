@@ -244,20 +244,25 @@ const findSimilarIncidents = async (embedding) => {
 const getIncidentByIssuedBy = async (req, res) => {
     const { issuedBy } = req.query;
     console.log("Fetching incidents for issuedBy:", issuedBy);
+
     if (!issuedBy) {
         return res.status(400).send("issuedBy is required");
     }
+
     try {
-        const incidents = await incidentModel.findById({ issuedBy });
-        if (incidents.length === 0) {
-            return res.status(404).json("No incidents found for the given issuedBy - - -> " + issuedBy);
+        const incidents = await incidentModel.find({ issuedBy }); // <-- 🔥 correct usage
+
+        if (!incidents || incidents.length === 0) {
+            return res.status(404).json(`No incidents found for issuedBy: ${issuedBy}`);
         }
+
         res.status(200).json(incidents);
     } catch (error) {
         console.error("Error fetching incidents:", error);
         res.status(500).send("Internal Server Error");
     }
-}
+};
+
 
 const incidentResolve = async (req, res) => {
     const { incidentId, resolution, resolvedBy } = req.body;
