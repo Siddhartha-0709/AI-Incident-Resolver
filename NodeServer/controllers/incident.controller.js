@@ -338,7 +338,7 @@ const getIncidentsByAssignedTo = async (req, res) => {
     }
 
     try {
-        const incidents = await incidentModel.findById(assignedTo);
+        const incidents = await incidentModel.find({assignedTo: assignedTo});
 
         if (!incidents || incidents.length === 0) {
             return res.status(404).json(`No incidents found for assignedTo: ${assignedTo}`);
