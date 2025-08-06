@@ -265,14 +265,14 @@ const getIncidentByIssuedBy = async (req, res) => {
 
 
 const incidentResolve = async (req, res) => {
-    const { incidentId, resolution, resolvedBy, assignedTo } = req.body;
+    const { incidentId, resolution, resolvedBy, fixScript } = req.body;
     if (!incidentId || !resolution || !resolvedBy ) {
         return res.status(400).send("incidentId is required");
     }
     try {
         const incident = await incidentModel.findByIdAndUpdate(
             incidentId,
-            { resolution, resolvedBy, status: 'resolved' },
+            { resolution, resolvedBy, status: 'resolved', fixScript },
             { new: true }
         );
         if (!incident) {
