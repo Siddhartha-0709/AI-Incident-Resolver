@@ -265,8 +265,8 @@ const getIncidentByIssuedBy = async (req, res) => {
 
 
 const incidentResolve = async (req, res) => {
-    const { incidentId, resolution, resolvedBy } = req.body;
-    if (!incidentId || !resolution || !resolvedBy) {
+    const { incidentId, resolution, resolvedBy, assignedTo } = req.body;
+    if (!incidentId || !resolution || !resolvedBy ) {
         return res.status(400).send("incidentId is required");
     }
     try {
@@ -329,4 +329,28 @@ const getAllIncidents = async (req, res) => {
     }
 }
 
-export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents };
+const getIncidentsByAssignedTo = async (req, res) => {
+    const { assignedTo } = req.query;
+    console.log("Fetching incidents for assignedTo:", assignedTo);
+
+    if (!assignedTo) {
+        return res.status(400).send("assignedTo is required");
+    }
+
+    try {
+        const incidents = await incidentModel.findById(assignedTo);
+
+        if (!incidents || incidents.length === 0) {
+            return res.status(404).json(`No incidents found for assignedTo: ${assignedTo}`);
+        }
+
+        res.status(200).json(incidents);
+    } catch (error) {
+        console.error("Error fetching incidents:", error);
+        res.status(500).send("Internal Server Error");
+    }
+};
+
+
+
+export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents, getIncidentsByAssignedTo };
