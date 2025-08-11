@@ -174,22 +174,62 @@ const explicitNewIncident = async (req, res) => {
         return res.status(400).send("Title, description, and issuedBy are required");
     }
     try {
+        const textToEmbed = `${title} ${description} ${symptoms.join(' ')}`;
+        console.log("Text to embed:", textToEmbed);
+        console.log("Waiting for embedding...");
 
         const embedding = await getEmbedding(textToEmbed);
         console.log("Embedding received");
-
+        
         if (!Array.isArray(embedding) || embedding.length !== 384) {
             return res.status(400).send("Invalid embedding received");
         }
 
+        //TODO:
+        console.log("No similar incidents found, proceeding to save new incident");
+        console.log("Generating AI helping tips and skills needed from Gemini");
+        // Create new incident object generate aiHelpingTips from Gemini and skillsNeeded from Gemini
+        const aiReport = await generateAIHelpingTipsandSkills(textToEmbed);
+        if (!aiReport) {
+            return res.status(500).send("Error generating AI report");
+        }
+
+        // Embedded the skillsNeeded
+        if (!Array.isArray(aiReport.skills_needed)) {
+            return res.status(400).send("Invalid skills_needed format from AI report");
+        }
+        console.log("Generating skill embeddings for skills needed");
+        const skillEmbeddings = await getEmbedding(aiReport.skills_needed.join(' '));
+        if (!Array.isArray(skillEmbeddings) || skillEmbeddings.length !== 384) {
+            return res.status(400).send("Invalid skill embeddings received");
+        }
+
+        console.log("Skill embeddings generated successfully");
+        console.log("Requesting user recommendation based on skill embeddings");
+
+        const userRes = await axios.post("http://python-services:5000/recommend-user", {
+            skillEmbedding: skillEmbeddings,
+        });
+
+        const assignedTo = userRes.data.user_id || null;
+        console.log("User recommended for assignment:", assignedTo);
+
+        console.log("Creating new incident object with AI report data");
         const newIncidentObject = new incidentModel({
             title,
             description,
             symptoms,
+            issuedBy,
             embedding,
-            issuedBy
+            aiHelpingTips: aiReport.helping_tips,
+            skillsNeeded: aiReport.skills_needed,
+            skillEmbeddings: skillEmbeddings,
+            status: 'open', 
+            assignedTo: assignedTo
         });
 
+        console.log("New incident object created:", newIncidentObject);
+        
         await newIncidentObject.save();
 
         console.log("Refreshing FAISS index with new incident embedding");
