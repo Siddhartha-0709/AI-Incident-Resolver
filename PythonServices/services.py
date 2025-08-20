@@ -47,7 +47,7 @@ def find_similar():
     data = request.json
     embedding = np.array(data['embedding']).astype('float32').reshape(1, -1)
     k = int(data.get('top_k', 5))
-    threshold = float(data.get('threshold', 0.3))
+    threshold = float(data.get('threshold', 0.7)) # Default threshold is 0.3 tweaked to 0.7 for better recommendations lesser is more strict
 
     D, I = index.search(embedding, k)
 
