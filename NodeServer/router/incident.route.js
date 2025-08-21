@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { newIncident, getIncidentByIssuedBy, incidentResolve, explicitNewIncident, getUnresolvedIncidents,getIncidentById, getAllIncidents, getIncidentsByAssignedTo } from "../controllers/incident.controller.js";
+import { newIncident, getIncidentByIssuedBy, incidentResolve, explicitNewIncident, getUnresolvedIncidents,getIncidentById, getAllIncidents, getIncidentsByAssignedTo, getUserDetailsandAssignedIncidents } from "../controllers/incident.controller.js";
 
 const router = Router();
 
@@ -13,4 +13,5 @@ router.route('/get-all').get(getAllIncidents);
 
 router.route('/get-incident-by-assigned-to').get(getIncidentsByAssignedTo);
 
+router.route('/admin-info').get(getUserDetailsandAssignedIncidents);
 export default router;

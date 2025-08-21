@@ -1,11 +1,12 @@
 import axios from "axios";
 import incidentModel from "../models/incident.model.js";
+import userModel from "../models/user.model.js";
+
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config'
 
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 
 async function generateAIHelpingTipsandSkills(incidentDetails) {
     try {
@@ -63,7 +64,6 @@ Your response:
         return null;
     }
 }
-
 
 const getEmbedding = async (text) => {
     const res = await axios.post('http://python-services:5000/embed', {
@@ -303,7 +303,6 @@ const getIncidentByIssuedBy = async (req, res) => {
     }
 };
 
-
 const incidentResolve = async (req, res) => {
     const { incidentId, resolution, resolvedBy, fixScript } = req.body;
     console.log("Resolving incident with ID:", incidentId);
@@ -394,6 +393,91 @@ const getIncidentsByAssignedTo = async (req, res) => {
     }
 };
 
+const getUserDetailsandAssignedIncidents = async (req, res) => {
+  try {
+    // Fetch users
+    const users = await userModel.find({}, "-password -skillEmbeddings");
+
+    // Fetch incidents with populated refs
+    const incidents = await incidentModel
+      .find({}, "-embedding -skillEmbeddings")
+      .populate("assignedTo", "name email role")
+      .populate("issuedBy", "name email role");
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    if (!incidents || incidents.length === 0) {
+      return res.status(404).json({ message: "No incidents found" });
+    }
+
+    // Global counts
+    const overallStats = {
+      totalIncidents: incidents.length,
+      open: incidents.filter((i) => i.status === "open").length,
+      inProgress: incidents.filter((i) => i.status === "in-progress").length,
+      resolved: incidents.filter((i) => i.status === "resolved").length,
+      closed: incidents.filter((i) => i.status === "closed").length,
+    };
+
+    // User level stats
+    const userDetails = users.map((user) => {
+      const assignedIncidents = incidents.filter(
+        (incident) =>
+          incident.assignedTo &&
+          incident.assignedTo._id.toString() === user._id.toString() &&
+          incident.status !== "resolved"
+      );
+
+      const resolvedIncidents = incidents.filter(
+        (incident) =>
+          incident.resolvedBy &&
+          incident.resolvedBy === user.name
+      );
+
+      return {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          skills: user.skills,
+        },
+        stats: {
+          totalAssigned: assignedIncidents.length,
+          totalResolved: resolvedIncidents.length,
+        },
+        assignedIncidents: assignedIncidents.map((incident) => ({
+          id: incident._id,
+          title: incident.title,
+          description: incident.description,
+          status: incident.status,
+          createdAt: incident.createdAt,
+          updatedAt: incident.updatedAt,
+          issuedBy: incident.issuedBy,
+        })),
+        resolvedIncidents: resolvedIncidents.map((incident) => ({
+          id: incident._id,
+          title: incident.title,
+          description: incident.description,
+          resolution: incident.resolution,
+          resolvedBy: incident.resolvedBy,
+          updatedAt: incident.updatedAt,
+        })),
+      };
+    });
+
+    return res.status(200).json({
+      overallStats,
+      userDetails,
+    });
+  } catch (err) {
+    console.error("Error fetching user and incident details:", err);
+    return res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
 
 
-export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents, getIncidentsByAssignedTo };
+
+export { newIncident, getIncidentByIssuedBy, explicitNewIncident, incidentResolve, getUnresolvedIncidents, getIncidentById, getAllIncidents, getIncidentsByAssignedTo, getUserDetailsandAssignedIncidents };
